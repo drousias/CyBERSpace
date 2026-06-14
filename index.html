@@ -1,0 +1,1255 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>CyBERSpace - Cyprus Internet Galaxy</title>
+<style>
+  html, body { margin: 0; padding: 0; overflow: hidden; background: #000; font-family: 'Courier New', monospace; }
+  canvas { display: block; }
+
+  #legend {
+    position: fixed; top: 12px; left: 12px; color: #ccc; font-size: 11px;
+    background: rgba(0,0,0,0.45); border: 1px solid #333; border-radius: 6px;
+    padding: 10px 12px; line-height: 1.6; pointer-events: none; z-index: 5;
+  }
+  #legend .row { display: flex; align-items: center; margin-bottom: 2px; }
+  #legend .swatch { display: inline-block; width: 10px; height: 10px; border-radius: 50%; margin-right: 8px; flex-shrink: 0; }
+  #legend h1 { font-size: 12px; margin: 0 0 6px 0; letter-spacing: 2px; color: #8ef; font-weight: normal; }
+
+  #ticker {
+    position: fixed; bottom: 0; left: 0; width: 100%; height: 26px;
+    background: rgba(0,0,0,0.6); border-top: 1px solid #222; color: #9cf;
+    font-size: 11px; overflow: hidden; z-index: 5; display: flex; align-items: center;
+    padding-left: 10px; gap: 24px; white-space: nowrap;
+  }
+  #ticker .item { opacity: 0.85; animation: fadein 0.4s ease-out; }
+  @keyframes fadein { from { opacity: 0; transform: translateY(4px); } to { opacity: 0.85; transform: translateY(0); } }
+
+  #info-panel {
+    position: fixed; top: 12px; right: 12px; width: 260px; color: #dfefff;
+    background: rgba(5,8,16,0.85); border: 1px solid #335; border-radius: 6px;
+    padding: 12px 14px; font-size: 12px; z-index: 6; line-height: 1.5;
+    display: none; box-shadow: 0 0 20px rgba(80,140,255,0.15);
+  }
+  #info-panel.visible { display: block; }
+  #info-panel h2 { margin: 0 0 6px 0; font-size: 14px; color: #8ef; }
+  #info-panel .muted { color: #789; }
+  #info-panel .close { position: absolute; top: 8px; right: 10px; cursor: pointer; color: #678; }
+  #info-panel ul { margin: 6px 0 0 0; padding-left: 16px; font-size: 11px; color: #abc; }
+
+  #status {
+    position: fixed; top: 12px; left: 50%; transform: translateX(-50%); color: #567;
+    font-size: 11px; z-index: 5; pointer-events: none;
+  }
+
+  /* -------------------------------------------------------------------- */
+  /* LANDING PAGE                                                          */
+  /* -------------------------------------------------------------------- */
+  #landing {
+    position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+    background: rgba(0,0,0,0.92); z-index: 50;
+    display: flex; align-items: center; justify-content: center;
+    transition: opacity 0.8s ease;
+  }
+  #landing.fade-out { opacity: 0; pointer-events: none; }
+  #landing.hidden { display: none; }
+
+  #landing-content {
+    text-align: center; color: #ddd; font-family: 'Courier New', monospace;
+    padding: 0 20px;
+  }
+  #landing-content h1 {
+    font-size: 64px; letter-spacing: 14px; font-weight: normal;
+    color: #e8e8e8; margin: 0 0 14px 0;
+  }
+  #landing-content .subtitle {
+    font-size: 14px; letter-spacing: 3px; color: #789; margin: 0 0 22px 0;
+    text-transform: uppercase;
+  }
+  #landing-content .description {
+    font-size: 13px; line-height: 1.7; color: #99a; max-width: 560px;
+    margin: 0 auto 36px auto;
+  }
+
+  .ui-btn {
+    display: inline-block; font-family: 'Courier New', monospace; font-size: 12px;
+    letter-spacing: 3px; color: #fff; background: transparent;
+    border: 1px solid #fff; padding: 12px 28px; cursor: pointer;
+    text-transform: uppercase; transition: background 0.2s, color 0.2s;
+  }
+  .ui-btn:hover { background: #fff; color: #000; }
+
+  /* -------------------------------------------------------------------- */
+  /* INFO BUTTON + MODAL                                                   */
+  /* -------------------------------------------------------------------- */
+  .info-btn {
+    position: fixed; bottom: 36px; right: 16px; z-index: 40;
+    font-family: 'Courier New', monospace; font-size: 11px; letter-spacing: 2px;
+    color: #fff; background: transparent; border: 1px solid #fff;
+    padding: 8px 16px; cursor: pointer; text-transform: uppercase;
+    transition: background 0.2s, color 0.2s;
+  }
+  .info-btn:hover { background: #fff; color: #000; }
+  #landing .info-btn { position: absolute; bottom: 24px; right: 24px; }
+
+  #about-overlay {
+    position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+    background: rgba(0,0,0,0.6); z-index: 60;
+    display: flex; align-items: center; justify-content: center;
+    opacity: 0; pointer-events: none; transition: opacity 0.8s ease;
+  }
+  #about-overlay.visible { opacity: 1; pointer-events: auto; }
+
+  #about-modal {
+    position: relative; background: rgba(5,8,16,0.95); border: 1px solid #335;
+    color: #dfefff; font-family: 'Courier New', monospace; font-size: 13px;
+    line-height: 1.8; padding: 28px 36px; max-width: 420px; box-shadow: 0 0 30px rgba(80,140,255,0.2);
+  }
+  #about-modal .close { position: absolute; top: 10px; right: 14px; cursor: pointer; color: #678; font-size: 16px; }
+  #about-modal h2 { margin: 0 0 14px 0; font-size: 14px; letter-spacing: 3px; color: #8ef; font-weight: normal; }
+  #about-modal .muted { color: #789; }
+  #about-modal a { color: #7ffcff; text-decoration: none; }
+  #about-modal a:hover { text-decoration: underline; }
+  #about-modal .footnote { color: #678; font-size: 11px; margin-top: 14px; }
+</style>
+</head>
+<body>
+
+<div id="legend">
+  <h1>CyBERSpace :: CY GALAXY</h1>
+  <div class="row"><span class="swatch" style="background:#9fd6ff;"></span> ISP / Telecom (star)</div>
+  <div class="row"><span class="swatch" style="background:#ffc266;"></span> University / Research</div>
+  <div class="row"><span class="swatch" style="background:#79ffaa;"></span> Government</div>
+  <div class="row"><span class="swatch" style="background:#cf8fff;"></span> CDN / Cloud</div>
+  <div class="row"><span class="swatch" style="background:#888;"></span> Unknown org</div>
+  <div class="row"><span class="swatch" style="background:#1a0010; box-shadow:0 0 4px 1px #f0f;"></span> CyIX (black hole)</div>
+  <div class="row"><span class="swatch" style="background:#fff; width:5px; height:5px;"></span> Planet = solar system body</div>
+  <div class="row"><span class="swatch" style="background:transparent; border:1px solid #88f;"></span> Nebula = AS path</div>
+  <div class="row"><span class="swatch" style="background:#4f8;"></span> Ring (green) = route announced</div>
+  <div class="row"><span class="swatch" style="background:#f44;"></span> Ring (red) = route withdrawn</div>
+  <div class="row"><span class="swatch" style="background:#fff;"></span> White flash = path change</div>
+  <div class="row"><span class="swatch" style="background:transparent; border:1px solid #0ff;"></span> Portal = wormhole route</div>
+</div>
+
+<div id="status">connecting...</div>
+<div id="ticker"></div>
+<div id="info-panel">
+  <span class="close" id="info-close">✕</span>
+  <h2 id="info-title">AS0</h2>
+  <div id="info-body"></div>
+</div>
+
+<!-- Persistent INFO button (galaxy screen) -->
+<button class="info-btn" id="info-btn-galaxy">Info</button>
+
+<!-- Landing page overlay -->
+<div id="landing">
+  <div id="landing-content">
+    <h1>CyBERSpace</h1>
+    <div class="subtitle">Cyprus Internet Traffic · Visualized as a Living Galaxy</div>
+    <div class="description">
+      Every star is an Autonomous System — a real network operating in Cyprus.
+      Every orbit, flash, and pulse is live BGP routing data from RIPE NCC.
+    </div>
+    <button class="ui-btn" id="enter-btn">Enter Galaxy</button>
+  </div>
+  <button class="info-btn" id="info-btn-landing">Info</button>
+</div>
+
+<!-- About / Info modal -->
+<div id="about-overlay">
+  <div id="about-modal">
+    <span class="close" id="about-close">✕</span>
+    <h2>ABOUT</h2>
+    <div><span class="muted">Name:</span> Alexandros Drousiotis</div>
+    <div><span class="muted">Organization:</span> University of Cyprus — KIOS CoE</div>
+    <div><span class="muted">GitHub Repo:</span> <a href="https://github.com/drousias/CyBERSpace" target="_blank" rel="noopener">github.com/drousias/CyBERSpace</a></div>
+    <div><span class="muted">LinkedIn:</span> <a href="https://www.linkedin.com/in/drousiotis-alexandros" target="_blank" rel="noopener">linkedin.com/in/drousiotis-alexandros</a></div>
+    <div class="footnote">Built with Three.js · Socket.io · RIPE NCC RIS Live · Node.js</div>
+    <div class="footnote">All data is live and public via RIPE NCC BGP routing feeds</div>
+  </div>
+</div>
+
+<script type="importmap">
+{
+  "imports": {
+    "three": "https://unpkg.com/three@0.160.0/build/three.module.js",
+    "three/addons/": "https://unpkg.com/three@0.160.0/examples/jsm/"
+  }
+}
+</script>
+<script src="/socket.io/socket.io.js"></script>
+<script type="module">
+import * as THREE from 'three';
+import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
+
+// ---------------------------------------------------------------------------
+// CONSTANTS
+// ---------------------------------------------------------------------------
+const SCALE = 0.08; // server layout units -> scene units
+const TYPE_COLORS = {
+  isp: 0x9fd6ff,
+  university: 0xffc266,
+  government: 0x79ffaa,
+  cdn: 0xcf8fff,
+  unknown: 0x888888,
+  cyix: 0x220022,
+};
+
+// Deterministic PRNG seeded per-ASN, used for procedural disc placement and
+// solar-system generation so the same AS always gets the same layout.
+function seededRand(seed) {
+  let s = Math.floor(Math.abs(seed)) % 2147483647;
+  if (s <= 0) s += 2147483646;
+  return () => {
+    s = (s * 16807) % 2147483647;
+    return (s - 1) / 2147483646;
+  };
+}
+
+// ---------------------------------------------------------------------------
+// SCENE SETUP
+// ---------------------------------------------------------------------------
+const scene = new THREE.Scene();
+scene.background = new THREE.Color(0x000000);
+
+const camera = new THREE.PerspectiveCamera(55, window.innerWidth / window.innerHeight, 0.1, 5000);
+camera.position.set(0, 35, 285);
+
+const renderer = new THREE.WebGLRenderer({ antialias: true });
+renderer.setSize(window.innerWidth, window.innerHeight);
+renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+document.body.appendChild(renderer.domElement);
+
+const controls = new OrbitControls(camera, renderer.domElement);
+controls.enableDamping = true;
+controls.dampingFactor = 0.06;
+controls.autoRotate = true;
+controls.autoRotateSpeed = 0.35;
+controls.minDistance = 10;
+controls.maxDistance = 600;
+controls.zoomSpeed = 2.0;
+
+scene.add(new THREE.AmbientLight(0x404060, 1.2));
+
+window.addEventListener('resize', () => {
+  camera.aspect = window.innerWidth / window.innerHeight;
+  camera.updateProjectionMatrix();
+  renderer.setSize(window.innerWidth, window.innerHeight);
+});
+
+// ---------------------------------------------------------------------------
+// PROCEDURAL TEXTURES (canvas radial gradients, generated once and reused)
+// ---------------------------------------------------------------------------
+function createRadialTexture(midColor) {
+  const size = 64;
+  const canvas = document.createElement('canvas');
+  canvas.width = size; canvas.height = size;
+  const ctx = canvas.getContext('2d');
+  const grad = ctx.createRadialGradient(size / 2, size / 2, 0, size / 2, size / 2, size / 2);
+  grad.addColorStop(0, '#ffffff');
+  grad.addColorStop(0.35, midColor);
+  grad.addColorStop(1, 'rgba(0,0,0,0)');
+  ctx.fillStyle = grad;
+  ctx.fillRect(0, 0, size, size);
+  const tex = new THREE.CanvasTexture(canvas);
+  return tex;
+}
+
+// One gradient texture per org type, reused across every star of that type.
+const STAR_TEXTURES = {
+  isp: createRadialTexture('#5fb3ff'),
+  university: createRadialTexture('#ffb347'),
+  cdn: createRadialTexture('#c873ff'),
+  government: createRadialTexture('#5fffa0'),
+  unknown: createRadialTexture('#b8c4d8'),
+};
+function getStarTexture(type) {
+  return STAR_TEXTURES[type] || STAR_TEXTURES.unknown;
+}
+
+// ---------------------------------------------------------------------------
+// BACKGROUND STARFIELD - single static Points object, never modified.
+// ---------------------------------------------------------------------------
+(function buildStarfield() {
+  const count = 2000;
+  const positions = new Float32Array(count * 3);
+  for (let i = 0; i < count; i++) {
+    const r = 400 + Math.random() * 1200;
+    const theta = Math.random() * Math.PI * 2;
+    const phi = Math.acos(2 * Math.random() - 1);
+    positions[i * 3] = r * Math.sin(phi) * Math.cos(theta);
+    positions[i * 3 + 1] = r * Math.cos(phi);
+    positions[i * 3 + 2] = r * Math.sin(phi) * Math.sin(theta);
+  }
+  const geo = new THREE.BufferGeometry();
+  geo.setAttribute('position', new THREE.BufferAttribute(positions, 3));
+  const mat = new THREE.PointsMaterial({ color: 0x556677, size: 1, sizeAttenuation: true });
+  scene.add(new THREE.Points(geo, mat));
+})();
+
+// ---------------------------------------------------------------------------
+// GALACTIC PLANE - single static glow mesh, never modified.
+// ---------------------------------------------------------------------------
+(function buildGalacticPlane() {
+  const size = 512;
+  const canvas = document.createElement('canvas');
+  canvas.width = size; canvas.height = size;
+  const ctx = canvas.getContext('2d');
+  const grad = ctx.createRadialGradient(size / 2, size / 2, 0, size / 2, size / 2, size / 2);
+  grad.addColorStop(0, 'rgba(130,150,255,0.22)');
+  grad.addColorStop(0.5, 'rgba(100,70,170,0.10)');
+  grad.addColorStop(1, 'rgba(0,0,0,0)');
+  ctx.fillStyle = grad;
+  ctx.fillRect(0, 0, size, size);
+  const tex = new THREE.CanvasTexture(canvas);
+  const geo = new THREE.PlaneGeometry(900, 900);
+  const mat = new THREE.MeshBasicMaterial({
+    map: tex, transparent: true, blending: THREE.AdditiveBlending,
+    depthWrite: false, side: THREE.DoubleSide,
+  });
+  const plane = new THREE.Mesh(geo, mat);
+  plane.rotation.x = Math.PI / 2;
+  plane.position.y = -1.5;
+  scene.add(plane);
+})();
+
+// ---------------------------------------------------------------------------
+// OBJECT REGISTRIES
+// ---------------------------------------------------------------------------
+const stars = new Map();        // asn -> { group, mesh, halo, light, data, target:{x,y}, ... }
+const peeringLines = new Map(); // key -> Line
+const wormholes = [];           // { group, life, maxLife }
+const clientEvents = [];        // rolling log for info panel
+
+function asnHash(asn) {
+  const n = typeof asn === 'number' ? asn : 0;
+  const x = Math.sin(n * 12.9898) * 43758.5453;
+  return (x - Math.floor(x)) * 2 - 1;
+}
+
+// Seeded disc placement for initial star positions (independent of the
+// server's force-layout coordinates, which are used only as drift targets).
+function discPosition(asn) {
+  const rand = seededRand((typeof asn === 'number' ? asn : 1) * 9973 + 17);
+  const r = (8 + rand() * 70) * 4;
+  const theta = rand() * Math.PI * 2;
+  const x = r * Math.cos(theta);
+  const y = (rand() - 0.5) * r * 0.3;
+  const z = r * Math.sin(theta);
+  return { x, y, z };
+}
+
+// CyIX's id ('CYIX') is a string; real ASNs are numbers. position_update
+// sends object keys as strings, so coerce back to the right type.
+function parseNodeId(key) {
+  return key === 'CYIX' ? key : Number(key);
+}
+
+function starColor(type) {
+  return TYPE_COLORS[type] !== undefined ? TYPE_COLORS[type] : TYPE_COLORS.unknown;
+}
+
+function starRadius(node) {
+  if (node.isCyix) return 3.2;
+  return 0.6 + Math.min(3, Math.sqrt(Math.max(0, node.prefixCount)) * 0.35);
+}
+
+function galaxyRadius() {
+  let max = 20;
+  for (const star of stars.values()) {
+    const d = star.group.position.length();
+    if (d > max) max = d;
+  }
+  return max;
+}
+
+// ---------------------------------------------------------------------------
+// SOLAR SYSTEMS - two InstancedMesh pools (rocky / gas giant) + one
+// InstancedMesh for all moons, plus a single merged-geometry LineSegments
+// for every orbital ring. Generated once per star at creation time from a
+// seed derived from the ASN; never created/destroyed at runtime.
+// ---------------------------------------------------------------------------
+const PLANET_BASE_SPEED = 1.2;
+const ROCKY_COLORS = [0x8a6d4b, 0x9b9b9b, 0xb5603a, 0x7a5230, 0xa68a6d];
+const GAS_COLORS = [0x4a90d9, 0x4adbc8, 0xe08a3c, 0x7a8fd9, 0x55c2a3];
+
+const ROCKY_MAX = 600;
+const GAS_MAX = 400;
+const MOON_MAX = 200;
+
+const rockyGeo = new THREE.SphereGeometry(1, 8, 8);
+const gasGeo = new THREE.SphereGeometry(1, 10, 10);
+const moonGeo = new THREE.SphereGeometry(1, 6, 6);
+const rockyMat = new THREE.MeshStandardMaterial({ roughness: 0.85, metalness: 0.05 });
+const gasMat = new THREE.MeshStandardMaterial({ roughness: 0.35, metalness: 0.15 });
+const moonMat = new THREE.MeshStandardMaterial({ color: 0x999999, roughness: 0.9 });
+
+const rockyMesh = new THREE.InstancedMesh(rockyGeo, rockyMat, ROCKY_MAX);
+const gasMesh = new THREE.InstancedMesh(gasGeo, gasMat, GAS_MAX);
+const moonMesh = new THREE.InstancedMesh(moonGeo, moonMat, MOON_MAX);
+rockyMesh.count = 0;
+gasMesh.count = 0;
+moonMesh.count = 0;
+rockyMesh.frustumCulled = false;
+gasMesh.frustumCulled = false;
+scene.add(rockyMesh, gasMesh, moonMesh);
+
+let rockyCount = 0, gasCount = 0, moonInstCount = 0;
+const solarPlanets = []; // { asn, orbitalRadius, speed, inclination, size, type, color, angle, instanceIndex, lastPos }
+const solarMoons = [];   // { planet, moonRadius, moonSpeed, moonAngle, size, instanceIndex }
+
+// One coherent record per AS: everything needed to keep its ring geometry,
+// planet instances and star sprite in the same coordinate space/origin.
+const solarSystems = new Map(); // asn -> { starSprite, haloSprite, planets: [...], moons: [...] }
+
+const planetDummy = new THREE.Object3D();
+
+function setPlanetMatrix(p, star) {
+  const ox = Math.cos(p.angle) * p.orbitalRadius;
+  const oz = Math.sin(p.angle) * p.orbitalRadius;
+  const oy = Math.sin(p.angle) * p.orbitalRadius * Math.sin(p.inclination);
+  planetDummy.position.set(star.group.position.x + ox, star.group.position.y + oy, star.group.position.z + oz);
+  planetDummy.scale.setScalar(p.size);
+  planetDummy.rotation.set(0, 0, 0);
+  planetDummy.updateMatrix();
+  (p.type === 'rocky' ? rockyMesh : gasMesh).setMatrixAt(p.instanceIndex, planetDummy.matrix);
+  p.lastPos = planetDummy.position.clone();
+}
+
+function setMoonMatrix(m) {
+  if (!m.planet.lastPos) return;
+  const mx = Math.cos(m.moonAngle) * m.moonRadius;
+  const mz = Math.sin(m.moonAngle) * m.moonRadius;
+  planetDummy.position.set(m.planet.lastPos.x + mx, m.planet.lastPos.y, m.planet.lastPos.z + mz);
+  planetDummy.scale.setScalar(m.size);
+  planetDummy.rotation.set(0, 0, 0);
+  planetDummy.updateMatrix();
+  moonMesh.setMatrixAt(m.instanceIndex, planetDummy.matrix);
+}
+
+function addPlanetInstance(planet, star) {
+  if (planet.type === 'rocky') {
+    if (rockyCount >= ROCKY_MAX) return null;
+    planet.instanceIndex = rockyCount++;
+    rockyMesh.count = rockyCount;
+    rockyMesh.setColorAt(planet.instanceIndex, new THREE.Color(planet.color));
+    if (rockyMesh.instanceColor) rockyMesh.instanceColor.needsUpdate = true;
+  } else {
+    if (gasCount >= GAS_MAX) return null;
+    planet.instanceIndex = gasCount++;
+    gasMesh.count = gasCount;
+    gasMesh.setColorAt(planet.instanceIndex, new THREE.Color(planet.color));
+    if (gasMesh.instanceColor) gasMesh.instanceColor.needsUpdate = true;
+  }
+  setPlanetMatrix(planet, star);
+  solarPlanets.push(planet);
+  return planet;
+}
+
+function addMoonInstance(moon) {
+  if (moonInstCount >= MOON_MAX) return null;
+  moon.instanceIndex = moonInstCount++;
+  moonMesh.count = moonInstCount;
+  setMoonMatrix(moon);
+  solarMoons.push(moon);
+  return moon;
+}
+
+// Orbital rings: a single LineSegments with one merged BufferGeometry
+// containing every ring's vertices, rebuilt whenever a new AS node is added.
+const ringLines = new THREE.LineSegments(
+  new THREE.BufferGeometry(),
+  new THREE.LineBasicMaterial({ color: 0x445577, transparent: true, opacity: 0.25 })
+);
+scene.add(ringLines);
+
+function ringPoint(star, radius, inclination, angle) {
+  const x = Math.cos(angle) * radius;
+  const z = Math.sin(angle) * radius;
+  const y = Math.sin(angle) * radius * Math.sin(inclination);
+  return [star.group.position.x + x, star.group.position.y + y, star.group.position.z + z];
+}
+
+function rebuildOrbitRings() {
+  const segs = 64;
+  const positions = [];
+  // Iterate per-AS solar systems so each ring's vertices are generated
+  // relative to that star's current world position - the same origin used
+  // for its planet instance matrices.
+  for (const [asn, sys] of solarSystems) {
+    const star = stars.get(asn);
+    if (!star) continue;
+    const rings = new Map(); // dedupe by radius+inclination
+    for (const p of sys.planets) {
+      rings.set(`${p.orbitalRadius.toFixed(3)}_${p.inclination.toFixed(3)}`, [p.orbitalRadius, p.inclination]);
+    }
+    for (const [, [radius, incl]] of rings) {
+      for (let i = 0; i < segs; i++) {
+        const a0 = (i / segs) * Math.PI * 2;
+        const a1 = ((i + 1) / segs) * Math.PI * 2;
+        positions.push(...ringPoint(star, radius, incl, a0), ...ringPoint(star, radius, incl, a1));
+      }
+    }
+  }
+  ringLines.geometry.dispose();
+  ringLines.geometry = new THREE.BufferGeometry();
+  ringLines.geometry.setAttribute('position', new THREE.BufferAttribute(new Float32Array(positions), 3));
+}
+
+// Procedurally generate a deterministic solar system for a star, seeded by
+// its ASN. Runs once at star-creation time - never driven by BGP events.
+function buildSolarSystem(star, asn) {
+  const rand = seededRand((typeof asn === 'number' ? asn : 1) * 7919 + 13);
+  const count = 2 + Math.floor(rand() * 5); // 2-6 planets
+  let r = starRadius(star.data) + 1.6;
+  const sys = { planets: [], moons: [] };
+  for (let i = 0; i < count; i++) {
+    r += 0.9 + rand() * 1.3;
+    const isOuter = i >= Math.ceil(count / 2);
+    const type = isOuter ? 'gas' : 'rocky';
+    const inclination = rand() * (Math.PI / 6); // 0-30deg
+    const speed = PLANET_BASE_SPEED / Math.sqrt(r);
+    const size = (type === 'rocky' ? 0.12 + rand() * 0.15 : 0.3 + rand() * 0.3) * 0.6;
+    const palette = type === 'rocky' ? ROCKY_COLORS : GAS_COLORS;
+    const color = palette[Math.floor(rand() * palette.length)];
+    const angle = rand() * Math.PI * 2;
+
+    const planet = addPlanetInstance({ asn, orbitalRadius: r * 0.4, speed, inclination, size, type, color, angle }, star);
+    if (!planet) continue;
+    sys.planets.push(planet);
+
+    if (type === 'gas') {
+      const moonCount = 1 + Math.floor(rand() * 2); // 1-2 moons for outer gas giants
+      for (let m = 0; m < moonCount; m++) {
+        const moon = addMoonInstance({
+          planet,
+          moonRadius: size + 0.3 + rand() * 0.4,
+          moonSpeed: speed * (2 + rand() * 2),
+          moonAngle: rand() * Math.PI * 2,
+          size: 0.06 + rand() * 0.05,
+        });
+        if (moon) sys.moons.push(moon);
+      }
+    }
+  }
+  solarSystems.set(asn, sys);
+  rebuildOrbitRings();
+}
+
+// ---------------------------------------------------------------------------
+// STAR / BLACK HOLE CREATION
+// ---------------------------------------------------------------------------
+function createStar(node) {
+  if (stars.has(node.asn)) return stars.get(node.asn);
+
+  const group = new THREE.Group();
+  const color = starColor(node.type);
+  const radius = starRadius(node);
+
+  let mesh, halo, light;
+  if (node.isCyix) {
+    const geo = new THREE.SphereGeometry(radius, 24, 24);
+    const mat = new THREE.MeshBasicMaterial({ color: 0x000000 });
+    mesh = new THREE.Mesh(geo, mat);
+    group.add(mesh);
+
+    // Accretion ring
+    const ring = new THREE.Mesh(
+      new THREE.TorusGeometry(radius * 2.2, 0.15, 8, 64),
+      new THREE.MeshBasicMaterial({ color: 0xff44ff, transparent: true, opacity: 0.5 })
+    );
+    ring.rotation.x = Math.PI / 2.4;
+    group.add(ring);
+    group.userData.ring = ring;
+
+    light = new THREE.PointLight(0xff44ff, 2, 60);
+    group.add(light);
+  } else {
+    const tex = getStarTexture(node.type);
+    const size = Math.max(2.2, radius * 2.4); // minimum size clearly visible at default camera distance
+
+    const mat = new THREE.SpriteMaterial({
+      map: tex, color: 0xffffff, blending: THREE.AdditiveBlending,
+      depthWrite: false, transparent: true,
+    });
+    mesh = new THREE.Sprite(mat);
+    mesh.scale.set(size, size, 1);
+    group.add(mesh);
+
+    // Secondary larger halo sprite behind the star.
+    const haloMat = new THREE.SpriteMaterial({
+      map: tex, color: 0xffffff, blending: THREE.AdditiveBlending,
+      depthWrite: false, transparent: true, opacity: 0.15,
+    });
+    halo = new THREE.Sprite(haloMat);
+    halo.scale.set(size * 3, size * 3, 1);
+    halo.position.z = -0.01; // ensure it renders behind the core sprite
+    group.add(halo);
+
+    light = new THREE.PointLight(color, 1.2, 40);
+    group.add(light);
+  }
+
+  let depthY, initX, initZ;
+  if (node.isCyix) {
+    depthY = 0; initX = 0; initZ = 0;
+  } else {
+    const disc = discPosition(node.asn);
+    depthY = disc.y; initX = disc.x; initZ = disc.z;
+  }
+  group.position.set(initX, depthY, initZ);
+  group.userData = { asn: node.asn, isStar: true };
+  scene.add(group);
+
+  const entry = {
+    group, mesh, halo, light, data: { ...node },
+    target: { x: node.x, y: node.y }, depthY,
+    phaseOffset: Math.random() * Math.PI * 2, // independent slow "breathing" pulse
+    baseSize: node.isCyix ? radius : Math.max(2.2, radius * 2.4),
+    baseColor: new THREE.Color(color),
+    baseLightIntensity: node.isCyix ? 2 : 1.2,
+    flashElapsed: null,   // set to 0 to start an activity flash tween
+    flashMode: 'bright',  // 'bright' (BGP activity) or 'white' (path_changed)
+  };
+  stars.set(node.asn, entry);
+
+  if (!node.isCyix) buildSolarSystem(entry, node.asn);
+
+  return entry;
+}
+
+function updateStar(node) {
+  const entry = stars.get(node.asn) || createStar(node);
+  Object.assign(entry.data, node);
+  entry.target.x = node.x;
+  entry.target.y = node.y;
+
+  if (!entry.data.isCyix) {
+    const color = starColor(entry.data.type);
+    entry.baseColor.setHex(color);
+    entry.light.color.setHex(color);
+    const tex = getStarTexture(entry.data.type);
+    entry.mesh.material.map = tex;
+    entry.halo.material.map = tex;
+    const r = starRadius(entry.data);
+    entry.baseSize = Math.max(2.2, r * 2.4);
+  }
+}
+
+// ---------------------------------------------------------------------------
+// PEERING LINES
+// ---------------------------------------------------------------------------
+function edgeKey(a, b) { return a < b ? `${a}-${b}` : `${b}-${a}`; }
+
+function createOrUpdateEdge(source, target, weight) {
+  const key = edgeKey(source, target);
+  const a = stars.get(source), b = stars.get(target);
+  if (!a || !b) return;
+  let line = peeringLines.get(key);
+  if (!line) {
+    const geo = new THREE.BufferGeometry().setFromPoints([a.group.position, b.group.position]);
+    const mat = new THREE.LineBasicMaterial({ color: 0x335577, transparent: true, opacity: 0.35 });
+    line = new THREE.Line(geo, mat);
+    scene.add(line);
+    peeringLines.set(key, line);
+  }
+  line.material.opacity = Math.min(0.7, 0.2 + weight * 0.05);
+  line.userData = { source, target };
+}
+
+// ---------------------------------------------------------------------------
+// ECHO STARS - ephemeral, purely visual particles spawned on BGP traffic
+// (route_announced / route_withdrawn). They drift in from the galaxy's outer
+// edge toward the center over ~2-3 minutes, pulsing faintly, then fade out.
+// A pre-allocated pool avoids GC pressure during busy traffic periods.
+// ---------------------------------------------------------------------------
+const ECHO_POOL_SIZE = 200;
+const echoPool = [];
+const ECHO_ORIGIN = new THREE.Vector3(0, 0, 0);
+
+(function buildEchoPool() {
+  const geo = new THREE.SphereGeometry(0.4, 6, 6);
+  for (let i = 0; i < ECHO_POOL_SIZE; i++) {
+    const mat = new THREE.MeshStandardMaterial({
+      color: 0xaaaaaa, emissive: 0x999999, emissiveIntensity: 0.5,
+      transparent: true, opacity: 0,
+    });
+    const mesh = new THREE.Mesh(geo, mat);
+    mesh.visible = false;
+    scene.add(mesh);
+    echoPool.push({
+      mesh, active: false, life: 0, maxLife: 0,
+      start: new THREE.Vector3(), seed: Math.random() * Math.PI * 2,
+    });
+  }
+})();
+
+function spawnEchoStar() {
+  const echo = echoPool.find((e) => !e.active);
+  if (!echo) return; // pool exhausted - busy galaxy is already saturated with echoes
+  const r = galaxyRadius() * (1 + Math.random() * 0.3);
+  const theta = Math.random() * Math.PI * 2;
+  const phi = Math.acos(2 * Math.random() - 1);
+  echo.start.set(
+    r * Math.sin(phi) * Math.cos(theta),
+    r * Math.cos(phi) * 0.5,
+    r * Math.sin(phi) * Math.sin(theta)
+  );
+  echo.mesh.position.copy(echo.start);
+  echo.mesh.scale.setScalar(0.75 + Math.random() * 0.5); // ~0.3-0.5 radius
+  echo.life = 0;
+  echo.maxLife = 120 + Math.random() * 60; // drift inward over 2-3 minutes
+  echo.active = true;
+  echo.mesh.visible = true;
+  echo.mesh.material.opacity = 0;
+}
+
+// ---------------------------------------------------------------------------
+// NEBULAE (AS path trails) - pooled, 30 pre-allocated Line objects.
+// ---------------------------------------------------------------------------
+const NEBULA_POOL_SIZE = 30;
+const NEBULA_MAX_POINTS = 16;
+const nebulaPool = [];
+
+(function buildNebulaPool() {
+  for (let i = 0; i < NEBULA_POOL_SIZE; i++) {
+    const geo = new THREE.BufferGeometry();
+    geo.setAttribute('position', new THREE.BufferAttribute(new Float32Array(NEBULA_MAX_POINTS * 3), 3));
+    const mat = new THREE.LineBasicMaterial({ color: 0x88aaff, transparent: true, opacity: 0 });
+    const line = new THREE.Line(geo, mat);
+    line.visible = false;
+    line.frustumCulled = false;
+    scene.add(line);
+    nebulaPool.push({ line, active: false, life: 0, maxLife: 8 });
+  }
+})();
+
+function createNebula(path, originType) {
+  const points = [];
+  for (const asn of path) {
+    const s = stars.get(asn);
+    if (s) points.push(s.group.position);
+  }
+  if (points.length < 2) return;
+  const entry = nebulaPool.find((n) => !n.active);
+  if (!entry) return;
+
+  const maxPts = Math.min(points.length, NEBULA_MAX_POINTS);
+  const arr = entry.line.geometry.attributes.position.array;
+  for (let i = 0; i < maxPts; i++) {
+    arr[i * 3] = points[i].x;
+    arr[i * 3 + 1] = points[i].y;
+    arr[i * 3 + 2] = points[i].z;
+  }
+  entry.line.geometry.attributes.position.needsUpdate = true;
+  entry.line.geometry.setDrawRange(0, maxPts);
+  entry.line.material.color.setHex(starColor(originType || 'unknown'));
+  entry.line.material.opacity = 0.6;
+  entry.line.visible = true;
+  entry.active = true;
+  entry.life = 0;
+  entry.maxLife = 8;
+}
+
+// ---------------------------------------------------------------------------
+// EVENT LAYER - shockwave rings (route announced/withdrawn) and withdrawal
+// streaks. All pre-allocated pools, never created/destroyed at runtime.
+// ---------------------------------------------------------------------------
+const SHOCKWAVE_POOL_SIZE = 20;
+
+function buildShockwavePool(color) {
+  const pool = [];
+  for (let i = 0; i < SHOCKWAVE_POOL_SIZE; i++) {
+    const geo = new THREE.RingGeometry(0.8, 1, 32);
+    const mat = new THREE.MeshBasicMaterial({
+      color, transparent: true, opacity: 0, side: THREE.DoubleSide, depthWrite: false,
+    });
+    const mesh = new THREE.Mesh(geo, mat);
+    mesh.visible = false;
+    scene.add(mesh);
+    pool.push({ mesh, active: false, life: 0, maxLife: 1 });
+  }
+  return pool;
+}
+const announcePool = buildShockwavePool(0x44ff88); // green
+const withdrawPool = buildShockwavePool(0xff4444); // red
+
+function spawnShockwave(asn, kind) {
+  const star = stars.get(asn);
+  if (!star) return;
+  const pool = kind === 'announce' ? announcePool : withdrawPool;
+  const entry = pool.find((e) => !e.active);
+  if (!entry) return;
+  entry.mesh.position.copy(star.group.position);
+  entry.mesh.lookAt(camera.position);
+  entry.mesh.scale.setScalar(1);
+  entry.mesh.material.opacity = 0.8;
+  entry.mesh.visible = true;
+  entry.active = true;
+  entry.life = 0;
+  entry.maxLife = 1;
+}
+
+const STREAK_POOL_SIZE = 20;
+const streakPool = [];
+(function buildStreakPool() {
+  const geo = new THREE.SphereGeometry(0.12, 6, 6);
+  for (let i = 0; i < STREAK_POOL_SIZE; i++) {
+    const mat = new THREE.MeshBasicMaterial({ color: 0xffee66, transparent: true, opacity: 0 });
+    const mesh = new THREE.Mesh(geo, mat);
+    mesh.visible = false;
+    scene.add(mesh);
+    streakPool.push({ mesh, active: false, life: 0, maxLife: 1.2, dir: new THREE.Vector3() });
+  }
+})();
+
+function spawnStreak(asn) {
+  const star = stars.get(asn);
+  if (!star) return;
+  const entry = streakPool.find((e) => !e.active);
+  if (!entry) return;
+  entry.mesh.position.copy(star.group.position);
+  entry.dir.set(Math.random() - 0.5, Math.random() - 0.5, Math.random() - 0.5).normalize();
+  entry.mesh.material.opacity = 1;
+  entry.mesh.scale.setScalar(1);
+  entry.mesh.visible = true;
+  entry.active = true;
+  entry.life = 0;
+  entry.maxLife = 1.2;
+}
+
+function triggerFlash(asn, mode) {
+  const star = stars.get(asn);
+  if (!star || star.data.isCyix) return;
+  star.flashElapsed = 0;
+  star.flashMode = mode;
+}
+
+// ---------------------------------------------------------------------------
+// WORMHOLES (boomerang routes through foreign ASNs)
+// ---------------------------------------------------------------------------
+function makeTextSprite(text) {
+  const canvas = document.createElement('canvas');
+  canvas.width = 256; canvas.height = 64;
+  const ctx = canvas.getContext('2d');
+  ctx.fillStyle = 'rgba(0,0,0,0)';
+  ctx.fillRect(0, 0, canvas.width, canvas.height);
+  ctx.font = '28px Courier New';
+  ctx.fillStyle = '#7ffcff';
+  ctx.textAlign = 'center';
+  ctx.textBaseline = 'middle';
+  ctx.fillText(text, canvas.width / 2, canvas.height / 2);
+  const texture = new THREE.CanvasTexture(canvas);
+  const mat = new THREE.SpriteMaterial({ map: texture, transparent: true });
+  const sprite = new THREE.Sprite(mat);
+  sprite.scale.set(6, 1.5, 1);
+  return sprite;
+}
+
+function createWormhole(from, to, via) {
+  const a = stars.get(from), b = stars.get(to);
+  if (!a || !b) return;
+  const mid = new THREE.Vector3().addVectors(a.group.position, b.group.position).multiplyScalar(0.5);
+  mid.y += 4 + Math.random() * 2;
+
+  const curve = new THREE.QuadraticBezierCurve3(a.group.position.clone(), mid, b.group.position.clone());
+  const points = curve.getPoints(40);
+  const geo = new THREE.BufferGeometry().setFromPoints(points);
+  const mat = new THREE.LineBasicMaterial({ color: 0x66ffff, transparent: true, opacity: 0.9 });
+  const line = new THREE.Line(geo, mat);
+
+  const label = makeTextSprite(`AS${via}`);
+  label.position.copy(mid);
+
+  const group = new THREE.Group();
+  group.add(line);
+  group.add(label);
+  scene.add(group);
+
+  wormholes.push({ group, life: 0, maxLife: 10 });
+}
+
+// ---------------------------------------------------------------------------
+// TICKER + INFO PANEL
+// ---------------------------------------------------------------------------
+const ticker = document.getElementById('ticker');
+function tickerMessage(type, data) {
+  let msg;
+  switch (type) {
+    case 'node_added': msg = `✦ new star AS${data.asn} (${data.type})`; break;
+    case 'route_announced': msg = data.transit
+      ? `route transit via CY: ${data.prefix}`
+      : `↗ ANNOUNCE AS${data.asn} → ${data.prefix}`; break;
+    case 'route_withdrawn': msg = `↘ WITHDRAW AS${data.asn} → ${data.prefix}`; break;
+    case 'path_changed': msg = `⚡ PATH CHANGE AS${data.asn} → ${data.prefix}`; break;
+    case 'wormhole': msg = `🌀 WORMHOLE AS${data.from} ⇄ AS${data.to} via AS${data.via}`; break;
+    case 'edge_added': msg = `peering AS${data.source} — AS${data.target}`; break;
+    default: msg = `${type} ${JSON.stringify(data)}`;
+  }
+  const el = document.createElement('div');
+  el.className = 'item';
+  el.textContent = msg;
+  ticker.appendChild(el);
+  while (ticker.children.length > 6) ticker.removeChild(ticker.firstChild);
+  setTimeout(() => { if (el.parentNode) el.parentNode.removeChild(el); }, 9000);
+}
+
+function logEvent(type, data) {
+  clientEvents.push({ type, data, t: Date.now() });
+  if (clientEvents.length > 300) clientEvents.shift();
+}
+
+// Info panel
+const infoPanel = document.getElementById('info-panel');
+const infoTitle = document.getElementById('info-title');
+const infoBody = document.getElementById('info-body');
+document.getElementById('info-close').addEventListener('click', () => infoPanel.classList.remove('visible'));
+
+function showInfo(asn) {
+  const star = stars.get(asn);
+  if (!star) return;
+  const d = star.data;
+  infoTitle.textContent = d.isCyix ? 'CyIX — Cyprus Internet Exchange' : `AS${asn}`;
+  const related = clientEvents
+    .filter(e => e.data && (e.data.asn === asn || (e.data.path && e.data.path.includes(asn)) || e.data.from === asn || e.data.to === asn))
+    .slice(-6).reverse();
+  let html = `
+    <div class="muted">Org:</div> ${d.name}<br/>
+    <div class="muted">Type:</div> ${d.type}<br/>
+    <div class="muted">Prefixes announced:</div> ${d.prefixCount}<br/>
+    <div class="muted">Peers:</div> ${d.peerCount}<br/>
+    <div class="muted">Recent activity:</div>
+    <ul>${related.map(e => `<li>${e.type}: ${e.data.prefix || (e.data.via ? 'via AS' + e.data.via : '')}</li>`).join('') || '<li>none</li>'}</ul>
+  `;
+  infoBody.innerHTML = html;
+  infoPanel.classList.add('visible');
+}
+
+// Click detection (vs drag) for star selection
+const raycaster = new THREE.Raycaster();
+const pointer = new THREE.Vector2();
+let downPos = null;
+renderer.domElement.addEventListener('pointerdown', (e) => { downPos = { x: e.clientX, y: e.clientY }; });
+renderer.domElement.addEventListener('pointerup', (e) => {
+  if (!downPos) return;
+  const dx = e.clientX - downPos.x, dy = e.clientY - downPos.y;
+  if (Math.sqrt(dx * dx + dy * dy) > 5) return; // drag, not click
+  pointer.x = (e.clientX / window.innerWidth) * 2 - 1;
+  pointer.y = -(e.clientY / window.innerHeight) * 2 + 1;
+  raycaster.setFromCamera(pointer, camera);
+  const meshes = [...stars.values()].map(s => s.mesh);
+  const hits = raycaster.intersectObjects(meshes);
+  if (hits.length) {
+    const hit = [...stars.values()].find(s => s.mesh === hits[0].object);
+    if (hit) showInfo(hit.data.asn);
+  }
+});
+
+// ---------------------------------------------------------------------------
+// SOCKET.IO WIRING
+// ---------------------------------------------------------------------------
+const socket = io();
+const status = document.getElementById('status');
+
+socket.on('connect', () => { status.textContent = 'connected · loading galaxy...'; });
+socket.on('disconnect', () => { status.textContent = 'disconnected — retrying...'; });
+
+socket.on('snapshot', (snap) => {
+  status.textContent = `live · ${snap.nodes.length} ASes`;
+
+  for (const node of snap.nodes) createStar(node);
+  controls.maxDistance = galaxyRadius() * 5;
+  for (const edge of snap.edges) createOrUpdateEdge(edge.source, edge.target, edge.weight);
+  for (const route of snap.routes) {
+    const star = stars.get(route.asn);
+    if (star) createNebula(route.path, star.data.type);
+  }
+
+  // Replay the last 10 minutes of events compressed into a 5-second burst.
+  const replay = snap.replayEvents || [];
+  const burstMs = 5000;
+  replay.forEach((evt, i) => {
+    setTimeout(() => applyEvent(evt.type, evt.data, true), (i / Math.max(1, replay.length)) * burstMs);
+  });
+});
+
+function applyEvent(type, data, isReplay) {
+  logEvent(type, data);
+  if (!isReplay) tickerMessage(type, data);
+
+  switch (type) {
+    case 'node_added':
+      createStar(data);
+      break;
+    case 'node_updated': {
+      updateStar(data);
+      triggerFlash(data.asn, 'bright'); // brief emissive flash on activity
+      break;
+    }
+    case 'edge_added':
+      createOrUpdateEdge(data.source, data.target, data.weight);
+      break;
+    case 'route_announced': {
+      if (!data.transit && stars.has(data.asn)) {
+        createNebula(data.path, stars.get(data.asn).data.type);
+        spawnShockwave(data.asn, 'announce');
+        triggerFlash(data.asn, 'bright');
+      } else if (data.path) {
+        createNebula(data.path, 'unknown');
+      }
+      spawnEchoStar();
+      break;
+    }
+    case 'route_withdrawn': {
+      if (stars.has(data.asn)) {
+        spawnShockwave(data.asn, 'withdraw');
+        spawnStreak(data.asn);
+        triggerFlash(data.asn, 'bright');
+      }
+      spawnEchoStar();
+      break;
+    }
+    case 'path_changed':
+      createNebula(data.newPath, stars.get(data.asn) ? stars.get(data.asn).data.type : 'unknown');
+      triggerFlash(data.asn, 'white');
+      break;
+    case 'wormhole':
+      createWormhole(data.from, data.to, data.via);
+      break;
+  }
+}
+
+['node_added', 'node_updated', 'edge_added', 'route_announced', 'route_withdrawn', 'path_changed', 'wormhole']
+  .forEach((evt) => socket.on(evt, (data) => applyEvent(evt, data, false)));
+
+socket.on('position_update', (positions) => {
+  for (const [key, val] of Object.entries(positions)) {
+    const asn = parseNodeId(key);
+    const star = stars.get(asn);
+    if (!star) continue;
+    star.target.x = val[0];
+    star.target.y = val[1];
+    star.data.updateRate = val[2];
+  }
+});
+
+// ---------------------------------------------------------------------------
+// LOD: track the 20 stars nearest the camera. Only those solar systems get
+// their planet/moon instance matrices updated each frame; everything else
+// freezes in place. Recomputed every 2 seconds - non-negotiable for perf.
+// ---------------------------------------------------------------------------
+let nearbyStars = new Set();
+let lodTimer = 0;
+
+function updateNearbyStars() {
+  const arr = [...stars.values()].filter((s) => !s.data.isCyix);
+  arr.sort((a, b) =>
+    a.group.position.distanceToSquared(camera.position) -
+    b.group.position.distanceToSquared(camera.position)
+  );
+  nearbyStars = new Set(arr.slice(0, 20).map((s) => s.data.asn));
+}
+
+// ---------------------------------------------------------------------------
+// ANIMATION LOOP
+// ---------------------------------------------------------------------------
+const clock = new THREE.Clock();
+const WHITE = new THREE.Color(0xffffff);
+
+function animate() {
+  requestAnimationFrame(animate);
+  const dt = Math.min(0.1, clock.getDelta());
+  const t = clock.elapsedTime;
+
+  lodTimer += dt;
+  if (lodTimer >= 2) {
+    lodTimer = 0;
+    updateNearbyStars();
+  }
+
+  // Star brightness fades with zoom distance: close up stars are at full
+  // brightness with visible halos, far out they dim to just a color tint.
+  const zoom = camera.position.length();
+  const minZoom = controls.minDistance;
+  const maxZoom = controls.maxDistance;
+  const zoomT = THREE.MathUtils.clamp((zoom - minZoom) / (maxZoom - minZoom), 0, 1);
+  const starOpacity = THREE.MathUtils.lerp(1.0, 0.15, zoomT);
+  const haloZoomOpacity = THREE.MathUtils.lerp(0.15, 0.0, zoomT);
+
+  // Stars: breathe gently, flash on activity. Position is fixed at initial
+  // placement - stars do not drift, so ring geometry and planet instance
+  // matrices (built relative to that position) stay aligned.
+  for (const star of stars.values()) {
+    if (!star.data.isCyix) {
+      // Every star breathes slowly and independently - never tied to BGP event rate.
+      const breathe = 1 + 0.05 * Math.sin(Date.now() * 0.001 + star.phaseOffset);
+      star.mesh.scale.setScalar(star.baseSize * breathe);
+      star.halo.scale.setScalar(star.baseSize * 3 * breathe);
+      star.mesh.material.opacity = starOpacity;
+
+      // BGP activity / path-change flash: tween light intensity (and halo glow)
+      // base -> 2x over 0.3s, back down over 0.7s. Never touches scale.
+      let f = 0;
+      if (star.flashElapsed !== null) {
+        star.flashElapsed += dt;
+        if (star.flashElapsed < 0.3) f = star.flashElapsed / 0.3;
+        else if (star.flashElapsed < 1.0) f = 1 - (star.flashElapsed - 0.3) / 0.7;
+        else { f = 0; star.flashElapsed = null; star.flashMode = 'bright'; }
+      }
+      star.light.intensity = star.baseLightIntensity * (1 + f);
+      if (star.flashMode === 'white') {
+        star.halo.material.color.copy(WHITE).lerp(star.baseColor, 1 - f);
+        star.halo.material.opacity = haloZoomOpacity + 0.45 * f;
+      } else {
+        star.halo.material.color.copy(WHITE);
+        star.halo.material.opacity = haloZoomOpacity + 0.2 * f;
+      }
+    } else if (star.group.userData.ring) {
+      star.group.userData.ring.rotation.z += dt * 0.5;
+    }
+  }
+
+  // Solar systems: orbit planets/moons for the 20 nearest stars only; all
+  // other systems stay frozen at their last computed transform.
+  for (const p of solarPlanets) {
+    if (!nearbyStars.has(p.asn)) continue;
+    const star = stars.get(p.asn);
+    if (!star) continue;
+    p.angle += dt * p.speed;
+    setPlanetMatrix(p, star);
+  }
+  rockyMesh.instanceMatrix.needsUpdate = true;
+  gasMesh.instanceMatrix.needsUpdate = true;
+
+  for (const m of solarMoons) {
+    if (!nearbyStars.has(m.planet.asn)) continue;
+    m.moonAngle += dt * m.moonSpeed;
+    setMoonMatrix(m);
+  }
+  moonMesh.instanceMatrix.needsUpdate = true;
+
+  // Peering lines follow their stars.
+  for (const line of peeringLines.values()) {
+    const a = stars.get(line.userData.source), b = stars.get(line.userData.target);
+    if (!a || !b) continue;
+    const pos = line.geometry.attributes.position;
+    pos.setXYZ(0, a.group.position.x, a.group.position.y, a.group.position.z);
+    pos.setXYZ(1, b.group.position.x, b.group.position.y, b.group.position.z);
+    pos.needsUpdate = true;
+  }
+
+  // Nebulae: fade and return to pool.
+  for (const n of nebulaPool) {
+    if (!n.active) continue;
+    n.life += dt;
+    const f = 1 - n.life / n.maxLife;
+    n.line.material.opacity = Math.max(0, 0.6 * f);
+    if (n.life >= n.maxLife) {
+      n.active = false;
+      n.line.visible = false;
+    }
+  }
+
+  // Wormholes: fade and remove.
+  for (let i = wormholes.length - 1; i >= 0; i--) {
+    const w = wormholes[i];
+    w.life += dt;
+    const f = 1 - w.life / w.maxLife;
+    w.group.children.forEach((c) => { if (c.material) c.material.opacity = Math.max(0, 0.9 * f); });
+    if (w.life >= w.maxLife) {
+      scene.remove(w.group);
+      wormholes.splice(i, 1);
+    }
+  }
+
+  // Shockwave rings (announce/withdraw): expand outward and fade, then return to pool.
+  for (const pool of [announcePool, withdrawPool]) {
+    for (const entry of pool) {
+      if (!entry.active) continue;
+      entry.life += dt;
+      const f = entry.life / entry.maxLife;
+      entry.mesh.scale.setScalar(1 + f * 4);
+      entry.mesh.material.opacity = Math.max(0, 0.8 * (1 - f));
+      entry.mesh.lookAt(camera.position);
+      if (entry.life >= entry.maxLife) {
+        entry.active = false;
+        entry.mesh.visible = false;
+      }
+    }
+  }
+
+  // Withdrawal streaks: shoot outward from the star and fade, then return to pool.
+  for (const st of streakPool) {
+    if (!st.active) continue;
+    st.life += dt;
+    st.mesh.position.addScaledVector(st.dir, dt * 8);
+    const f = 1 - st.life / st.maxLife;
+    st.mesh.scale.setScalar(Math.max(0.01, f));
+    st.mesh.material.opacity = Math.max(0, f);
+    if (st.life >= st.maxLife) {
+      st.active = false;
+      st.mesh.visible = false;
+    }
+  }
+
+  // Echo stars: drift inward from the outer edge, pulse faintly, fade out.
+  for (const echo of echoPool) {
+    if (!echo.active) continue;
+    echo.life += dt;
+    const f = Math.min(1, echo.life / echo.maxLife);
+    echo.mesh.position.lerpVectors(echo.start, ECHO_ORIGIN, f);
+
+    let opacity;
+    if (f < 0.05) opacity = f / 0.05;          // fade in
+    else if (f > 0.8) opacity = (1 - f) / 0.2; // fade out
+    else opacity = 1;
+    const pulse = 0.5 + 0.2 * Math.sin(t * 2 + echo.seed);
+    echo.mesh.material.opacity = Math.max(0, Math.min(0.55, opacity * pulse));
+
+    if (f >= 1) {
+      echo.active = false;
+      echo.mesh.visible = false;
+      echo.mesh.material.opacity = 0;
+    }
+  }
+
+  controls.update();
+  renderer.render(scene, camera);
+}
+
+animate();
+</script>
+
+<script>
+// ---------------------------------------------------------------------------
+// LANDING PAGE + INFO MODAL (pure UI - no Three.js / Socket.io interaction)
+// ---------------------------------------------------------------------------
+(function () {
+  const landing = document.getElementById('landing');
+  const enterBtn = document.getElementById('enter-btn');
+
+  enterBtn.addEventListener('click', () => {
+    landing.classList.add('fade-out');
+    setTimeout(() => landing.classList.add('hidden'), 800);
+  });
+
+  const aboutOverlay = document.getElementById('about-overlay');
+  const aboutClose = document.getElementById('about-close');
+  const infoBtnLanding = document.getElementById('info-btn-landing');
+  const infoBtnGalaxy = document.getElementById('info-btn-galaxy');
+
+  function openAbout() { aboutOverlay.classList.add('visible'); }
+  function closeAbout() { aboutOverlay.classList.remove('visible'); }
+
+  infoBtnLanding.addEventListener('click', (e) => { e.stopPropagation(); openAbout(); });
+  infoBtnGalaxy.addEventListener('click', (e) => { e.stopPropagation(); openAbout(); });
+  aboutClose.addEventListener('click', closeAbout);
+  aboutOverlay.addEventListener('click', (e) => {
+    if (e.target === aboutOverlay) closeAbout(); // click outside modal closes it
+  });
+})();
+</script>
+</body>
+</html>

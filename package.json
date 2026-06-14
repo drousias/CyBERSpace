@@ -1,0 +1,19 @@
+{
+  "name": "cyberspace-galaxy",
+  "version": "1.0.0",
+  "description": "Cyprus internet traffic visualized as a living galaxy - RIPE RIS Live BGP feed rendered with Three.js",
+  "main": "server.js",
+  "private": true,
+  "scripts": {
+    "start": "node server.js"
+  },
+  "engines": {
+    "node": ">=18"
+  },
+  "dependencies": {
+    "d3-force": "^3.0.0",
+    "express": "^4.19.2",
+    "socket.io": "^4.7.5",
+    "ws": "^8.17.1"
+  }
+}
