@@ -106,8 +106,6 @@ The server listens on port `3000` by default (override with `PORT=<port>`). Open
 | Graph layout | d3-force |
 | 3D rendering | Three.js |
 | Process management | PM2 |
-| Hosting | Oracle Cloud (Always Free tier) |
-| Public exposure | Cloudflare Tunnel |
 
 ## Author
 
