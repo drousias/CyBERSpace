@@ -47,7 +47,7 @@ Cyprus has roughly **130 registered ASNs** — a mix of ISPs (CYTA, PrimeTel, Ca
 | Star breathing pulse | Idle animation — always running, independent of BGP activity |
 | Star brightness flash | A `node_updated` / BGP activity event for that AS |
 | White flash | `path_changed` — the AS path to a prefix changed |
-| Planets + moons orbiting a star | Procedurally generated per-AS "solar system" (decorative, seeded by ASN — not driven by live data) |
+| Planets + moons orbiting a star | Procedurally generated per-AS "solar system" |
 | Orbital rings | Static geometry marking each planet's orbit |
 | Expanding green ring | `route_announced` — a new prefix announcement |
 | Expanding red ring | `route_withdrawn` — a prefix withdrawal |
