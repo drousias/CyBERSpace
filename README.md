@@ -8,7 +8,7 @@ CyBERSpace turns the live BGP routing table for Cyprus into a 3D galaxy. Each st
 
 ## Live Demo
 
-`https://<your-deployment-url>` *(placeholder — update once deployed)*
+`https://cyberspace-project.xyz`
 
 ## How it works — The Data Pipeline
 
