@@ -82,7 +82,27 @@ npm install
 node server.js
 ```
 
-The server listens on port `3000` by default (override with `PORT=<port>`). Open `http://localhost:3000` in a browser.
+The server listens on port `3000` by default. Open `http://localhost:3000` in a browser.
+
+## Configuration
+
+All settings are optional and read from environment variables — the defaults below produce the Cyprus galaxy with no setup. There is no `.env` file to create; just export a variable (or prefix the command) to override a default, e.g.:
+
+```bash
+PORT=8080 COUNTRY_CODE=GR node server.js
+```
+
+| Variable | Default | Meaning |
+|---|---|---|
+| `PORT` | `3000` | HTTP / WebSocket port the server listens on |
+| `COUNTRY_CODE` | `CY` | ISO 3166-1 alpha-2 country whose ASNs populate the galaxy |
+| `ANCHOR_ASNS` | `6866,8544,35432` | ASNs pulled strongly toward the CyIX hub (default: CYTA, PrimeTel, Cablenet) |
+| `MAX_SUBSCRIBE_ASNS` | `200` | Cap on the number of ASNs subscribed to on RIS Live |
+| `EVENT_RETENTION_MS` | `600000` | How long recent events are retained for replay (10 min) |
+| `POSITION_BROADCAST_MS` | `2000` | Interval between star-position broadcasts to clients |
+| `SIM_TICK_MS` | `100` | Force-layout simulation tick interval |
+| `DECAY_MS` | `3000` | Interval at which star activity pulses decay |
+| `RIS_LIVE_CLIENT_NAME` | `cyberspace-galaxy` | Client identifier sent to the RIS Live feed |
 
 ## Data sources
 
