@@ -8,7 +8,7 @@ CyBERSpace turns the live BGP routing table for Cyprus into a 3D galaxy. Each st
 
 ## Live Demo
 
-`https://<your-deployment-url>` *(placeholder — update once deployed)*
+`https://cyberspace-project.xyz/`
 
 ## How it works — The Data Pipeline
 
@@ -86,7 +86,7 @@ The server listens on port `3000` by default. Open `http://localhost:3000` in a 
 
 ## Configuration
 
-All settings are optional and read from environment variables — the defaults below produce the Cyprus galaxy with no setup. There is no `.env` file to create; just export a variable (or prefix the command) to override a default, e.g.:
+All settings are optional and read from environment variables — the defaults below produce the Cyprus galaxy with no setup or config files. Export a variable (or prefix the command) to override a default, e.g.:
 
 ```bash
 PORT=8080 COUNTRY_CODE=GR node server.js
