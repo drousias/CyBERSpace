@@ -8,7 +8,7 @@ CyBERSpace turns the live BGP routing table for Cyprus into a 3D galaxy. Each st
 
 ## Live Demo
 
-`https://<your-deployment-url>` *(placeholder — update once deployed)*
+`https://cyberspace-project.xyz/`
 
 ## How it works — The Data Pipeline
 
@@ -42,12 +42,12 @@ Cyprus has roughly **130 registered ASNs** — a mix of ISPs (CYTA, PrimeTel, Ca
 | Star color: green | Government |
 | Star color: purple | CDN / Cloud |
 | Star color: grey | Unknown / unclassified org |
-| Black hole at galaxy center (CyIX) | Synthetic hub node representing the Cyprus Internet Exchange (not a real ASN) |
+| Black hole at galaxy center (CyIX) | Synthetic hub node representing the Cyprus Internet Exchange |
 | Star size | Number of prefixes currently announced by that AS |
 | Star breathing pulse | Idle animation — always running, independent of BGP activity |
 | Star brightness flash | A `node_updated` / BGP activity event for that AS |
 | White flash | `path_changed` — the AS path to a prefix changed |
-| Planets + moons orbiting a star | Procedurally generated per-AS "solar system" (decorative, seeded by ASN — not driven by live data) |
+| Planets + moons orbiting a star | Procedurally generated per-AS "solar system" |
 | Orbital rings | Static geometry marking each planet's orbit |
 | Expanding green ring | `route_announced` — a new prefix announcement |
 | Expanding red ring | `route_withdrawn` — a prefix withdrawal |
@@ -64,7 +64,7 @@ Cyprus has roughly **130 registered ASNs** — a mix of ISPs (CYTA, PrimeTel, Ca
 - **Express** — serves the static frontend (`index.html`) and any assets.
 - **Socket.io** — pushes the initial galaxy snapshot to each connecting client, then streams `node_added`, `node_updated`, `edge_added`, `route_announced`, `route_withdrawn`, `path_changed`, `wormhole`, and periodic `position_update` events.
 - **ws** — maintains a persistent WebSocket connection to RIPE NCC RIS Live, parses incoming BGP UPDATE messages, and reconnects automatically on disconnect.
-- **d3-force** — runs a force-directed layout (`forceManyBody`, `forceLink`, `forceX`/`forceY`) to position stars based on peering relationships and attraction toward the CyIX hub. The simulation is ticked manually on an interval and only reheated (`alpha`) when a new node is added, so existing stars don't jitter on every BGP event.
+- **d3-force** — runs a force-directed layout (`forceManyBody`, `forceLink`, `forceX`/`forceY`) to position stars based on peering relationships and attraction toward the CyIX hub.
 
 ### Frontend (Three.js, single-file `index.html`)
 
@@ -73,15 +73,10 @@ Cyprus has roughly **130 registered ASNs** — a mix of ISPs (CYTA, PrimeTel, Ca
 - A level-of-detail system updates planet/moon orbital animation only for the 20 stars nearest the camera, recomputed every 2 seconds.
 - OrbitControls for camera movement; a ticker, info panel, and landing/about overlay for UI.
 
-### Deployment
-
-- **Oracle Cloud Always Free** — an Ampere (ARM) compute instance running Ubuntu 22.04, hosting the Node.js server under PM2.
-- **Cloudflare Tunnel** — exposes the app publicly over HTTPS/WSS without opening inbound ports or running a reverse proxy; Socket.io traffic is proxied transparently.
-
 ## Running locally
 
 ```bash
-git clone https://github.com/<your-org>/CyBERSpace.git
+git clone https://github.com/drousias/CyBERSpace.git
 cd CyBERSpace
 npm install
 node server.js
@@ -105,9 +100,6 @@ The server listens on port `3000` by default (override with `PORT=<port>`). Open
 | BGP feed client | ws (WebSocket) |
 | Graph layout | d3-force |
 | 3D rendering | Three.js |
-| Process management | PM2 |
-| Hosting | Oracle Cloud (Always Free tier) |
-| Public exposure | Cloudflare Tunnel |
 
 ## Author
 

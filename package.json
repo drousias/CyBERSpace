@@ -3,7 +3,7 @@
   "version": "1.0.0",
   "description": "Cyprus internet traffic visualized as a living galaxy - RIPE RIS Live BGP feed rendered with Three.js",
   "main": "server.js",
-  "private": true,
+  "license": "MIT",
   "scripts": {
     "start": "node server.js"
   },
